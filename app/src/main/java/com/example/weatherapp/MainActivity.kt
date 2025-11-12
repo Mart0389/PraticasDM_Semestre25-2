@@ -18,24 +18,32 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-
-// --- IMPORTAÇÕES CORRIGIDAS DO PACOTE UI.NAV ---
-// Estas importações resolvem o erro 'Unresolved reference nav'
 import com.example.weatherapp.ui.nav.BottomNavBar
 import com.example.weatherapp.ui.nav.MainNavHost
 import com.example.weatherapp.ui.nav.BottomNavItem
-// -------------------------------------------------
-
+import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.example.weatherapp.ui.theme.WeatherAppTheme
+import com.example.weatherapp.MainViewModel
+import com.example.weatherapp.ui.theme.CityDialog
+import androidx.compose.runtime.setValue
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
 
             val navController = rememberNavController()
+
+            var showDialog by remember { mutableStateOf(false) }
 
             val bottomNavItems = listOf(
                 BottomNavItem.HomeButton,
@@ -44,6 +52,14 @@ class MainActivity : ComponentActivity() {
             )
 
             WeatherAppTheme {
+
+                if (showDialog) CityDialog(
+                    onDismiss = { showDialog = false },
+                    onConfirm = { city ->
+                        if (city.isNotBlank()) viewModel.add(city)
+                        showDialog = false
+                    })
+
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -62,13 +78,13 @@ class MainActivity : ComponentActivity() {
                         BottomNavBar(navController = navController, items = bottomNavItems)
                     },
                     floatingActionButton = {
-                        FloatingActionButton(onClick = { /* Ação do FAB */ }) {
+                        FloatingActionButton(onClick = { showDialog = true }) {
                             Icon(Icons.Default.Add, contentDescription = "Adicionar")
                         }
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        MainNavHost(navController = navController)
+                        MainNavHost(navController = navController, viewModel = viewModel)
                     }
                 }
             }

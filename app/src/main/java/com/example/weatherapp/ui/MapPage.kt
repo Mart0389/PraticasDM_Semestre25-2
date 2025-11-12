@@ -1,4 +1,4 @@
-package com.example.weatherapp.ui
+package com.example.weatherapp.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -13,9 +13,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.example.weatherapp.MainViewModel
+
 
 @Composable
-fun MapPage(modifier: Modifier = Modifier) {
+fun MapPage(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel // <--- PASSO 3: Adicionado
+) {
     Column(
         modifier = modifier.fillMaxSize()
             .background(Color.Gray)
