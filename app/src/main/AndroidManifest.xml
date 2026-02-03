@@ -26,12 +26,7 @@
             android:launchMode="singleTask"
             android:label="@string/title_activity_register"
             android:theme="@style/Theme.WeatherApp" />
-        <activity
-            android:name=".HomePage"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:label="@string/title_activity_home_page"
-            android:theme="@style/Theme.WeatherApp" />
+
         <activity
             android:name=".LoginActivity"
             android:exported="true"

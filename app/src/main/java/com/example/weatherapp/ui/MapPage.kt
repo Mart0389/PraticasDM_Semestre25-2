@@ -67,7 +67,7 @@ fun MapPage(
                 cameraPositionState = camPosState,
 
         onMapClick = {
-            viewModel.add("Cidade@${it.latitude}:${it.longitude}", location = it)
+            viewModel.addCity(it)
         }
     ) {
 
