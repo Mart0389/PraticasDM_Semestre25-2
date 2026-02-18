@@ -1,6 +1,6 @@
 package com.example.weatherapp
 
-import android.R.attr.name
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,6 +25,7 @@ import com.example.weatherapp.ui.nav.BottomNavBar
 import com.example.weatherapp.ui.nav.MainNavHost
 import com.example.weatherapp.ui.nav.BottomNavItem
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,8 @@ import com.example.weatherapp.db.fb.FBDatabase
 import com.example.weatherapp.ui.nav.Route
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+
+//private val MainActivity.items: List<BottomNavItem>
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -104,7 +107,11 @@ class MainActivity : ComponentActivity() {
                         )
                     },
                     bottomBar = {
-                        BottomNavBar(navController = navController, items = bottomNavItems)
+                        //BottomNavBar(viewModel, items) -- o que tem na prática
+
+                        BottomNavBar(viewModel = viewModel, items = bottomNavItems) // o que a IA sugeriu
+
+                    //BottomNavBar(navController = navController, items = bottomNavItems)
                     },
                     floatingActionButton = {
                         if (showButton) {
@@ -120,6 +127,20 @@ class MainActivity : ComponentActivity() {
                         launcher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                         MainNavHost(navController = navController, viewModel = viewModel)
                     }
+
+                    LaunchedEffect(viewModel.page) {
+                        navController.navigate(viewModel.page) {
+                            // Volta pilha de navegação até HomePage (startDest).
+                            navController.graph.startDestinationRoute?.let {
+                                popUpTo(it) {
+                                    saveState = true
+                                }
+                                restoreState = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+
                 }
             }
         }
