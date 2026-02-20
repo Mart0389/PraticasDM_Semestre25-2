@@ -32,6 +32,10 @@ import com.google.maps.android.compose.MapUiSettings
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat.getDrawable
+import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.scale
+import com.example.weatherapp.R
 import com.example.weatherapp.model.Weather
 
 
@@ -45,9 +49,9 @@ fun MapPage(
 
 
 
-    val recife = LatLng(-8.05, -34.9)
-    val caruaru = LatLng(-8.27, -35.98)
-    val joaopessoa = LatLng(-7.12, -34.84)
+    //val recife = LatLng(-8.05, -34.9)
+    //val caruaru = LatLng(-8.27, -35.98)
+    //val joaopessoa = LatLng(-7.12, -34.84)
 
 
     val context = LocalContext.current
@@ -76,10 +80,19 @@ fun MapPage(
             if (it.location != null) {
 
                 val weather = viewModel.weather(it.name)
+
+
+                val image = weather.bitmap ?:
+                getDrawable(context, R.drawable.loading)!!.toBitmap()
+
+                val marker = BitmapDescriptorFactory
+                    .fromBitmap(image.scale(120,120))
+
                 val desc = if (weather == Weather.LOADING) "Carregando clima..."
-                else weather.desc
+                   else weather.desc
 
                 Marker( state = MarkerState(position = it.location!!),
+                    icon = marker,
                     title = it.name, snippet = desc
                 )
 

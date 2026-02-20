@@ -79,6 +79,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.5")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     //Retrofit
     implementation ("com.squareup.retrofit2:retrofit:3.0.0")

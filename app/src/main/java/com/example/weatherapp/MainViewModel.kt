@@ -21,7 +21,6 @@ import com.example.weatherapp.ui.nav.Route
 import com.google.android.gms.maps.model.LatLng
 
 
-
 class MainViewModel (private val db: FBDatabase,
                      private val service : WeatherService
 ): ViewModel(), FBDatabase.Listener {
@@ -107,6 +106,16 @@ class MainViewModel (private val db: FBDatabase,
         service.getWeather(name) { apiWeather ->
             apiWeather?.let {
                 _weather[name] = apiWeather.toWeather()
+
+                loadBitmap(name)
+            }
+        }
+    }
+
+    fun loadBitmap(name: String) {
+        _weather[name]?.let { weather ->
+            service.getBitmap(weather.imgUrl) { bitmap ->
+                _weather[name] = weather.copy(bitmap = bitmap)
             }
         }
     }
