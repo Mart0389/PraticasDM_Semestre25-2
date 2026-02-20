@@ -1,6 +1,6 @@
 package com.example.weatherapp
 
-
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,7 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.weatherapp.ui.nav.BottomNavBar
 import com.example.weatherapp.ui.nav.MainNavHost
 import com.example.weatherapp.ui.nav.BottomNavItem
-import androidx.activity.viewModels
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,55 +38,64 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.weatherapp.api.WeatherService
 import com.example.weatherapp.db.fb.FBDatabase
+import com.example.weatherapp.monitor.ForecastMonitor
 import com.example.weatherapp.ui.nav.Route
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-
-//private val MainActivity.items: List<BottomNavItem>
+import androidx.core.util.Consumer
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
-
-    //private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
-
             val fbDB = remember { FBDatabase() }
-
             val weatherService = remember { WeatherService(this) }
-
-            //val weatherService = remember { WeatherService() }
+            val forecastMonitor = remember { ForecastMonitor(this) }
 
             val viewModel : MainViewModel = viewModel(
-                factory = MainViewModelFactory(fbDB, weatherService)
+                factory = MainViewModelFactory(fbDB, weatherService, forecastMonitor)
             )
 
-            val navController = rememberNavController()
+            // PASSO 6 CORRIGIDO: Tratamento seguro de nulos
+            DisposableEffect(Unit) {
+                val listener = Consumer<Intent> { intent ->
+                    // O getStringExtra retorna uma String? (pode ser nula)
+                    val cityName = intent.getStringExtra("city")
 
+                    // Verificação de segurança: só age se o cityName não for nulo
+                    if (cityName != null) {
+                        viewModel.city = cityName
+                        viewModel.page = Route.Home
+                    }
+                }
+                addOnNewIntentListener(listener)
+                onDispose { removeOnNewIntentListener(listener) }
+            }
+
+            val navController = rememberNavController()
             var showDialog by remember { mutableStateOf(false) }
 
             val bottomNavItems = listOf(
                 BottomNavItem.HomeButton,
                 BottomNavItem.ListButton,
                 BottomNavItem.MapButton,
-
             )
 
             val currentRoute = navController.currentBackStackEntryAsState()
             val showButton = currentRoute.value?.destination?.hasRoute(Route.List::class) == true
+
             val launcher = rememberLauncherForActivityResult(contract =
-                ActivityResultContracts.RequestPermission(), onResult = {} )
+                ActivityResultContracts.RequestMultiplePermissions(), onResult = {} )
 
             WeatherAppTheme {
-
                 if (showDialog) CityDialog(
                     onDismiss = { showDialog = false },
                     onConfirm = { city ->
-                        if (city.isNotBlank()) { viewModel.addCity(city)}
+                        if (city.isNotBlank()) { viewModel.addCity(city) }
                         showDialog = false
                     })
 
@@ -94,14 +103,13 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(
                             title = {
-                                val name = viewModel.user?.name?:"[carregando...]"
+                                val name = viewModel.user?.name ?: "[carregando...]"
                                 Text("Bem-vindo/a! $name")
                             },
                             actions = {
-                                IconButton( onClick = {
+                                IconButton(onClick = {
                                     Firebase.auth.signOut()
-
-                                } ) {
+                                }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                         contentDescription = "Sair da Aplicação"
@@ -111,11 +119,7 @@ class MainActivity : ComponentActivity() {
                         )
                     },
                     bottomBar = {
-                        //BottomNavBar(viewModel, items) -- o que tem na prática
-
-                        BottomNavBar(viewModel = viewModel, items = bottomNavItems) // o que a IA sugeriu
-
-                    //BottomNavBar(navController = navController, items = bottomNavItems)
+                        BottomNavBar(viewModel = viewModel, items = bottomNavItems)
                     },
                     floatingActionButton = {
                         if (showButton) {
@@ -124,27 +128,30 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-
-
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        launcher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        LaunchedEffect(Unit) {
+                            launcher.launch(
+                                arrayOf(
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    android.Manifest.permission.POST_NOTIFICATIONS
+                                )
+                            )
+                        }
+
                         MainNavHost(navController = navController, viewModel = viewModel)
                     }
 
                     LaunchedEffect(viewModel.page) {
                         navController.navigate(viewModel.page) {
-                            // Volta pilha de navegação até HomePage (startDest).
                             navController.graph.startDestinationRoute?.let {
-                                popUpTo(it) {
-                                    saveState = true
-                                }
+                                popUpTo(it) { saveState = true }
                                 restoreState = true
                             }
                             launchSingleTop = true
                         }
                     }
-
                 }
             }
         }
