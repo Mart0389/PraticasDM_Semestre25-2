@@ -43,6 +43,9 @@ import com.example.weatherapp.ui.nav.Route
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import androidx.core.util.Consumer
+import com.example.weatherapp.db.local.LocalDatabase
+import com.example.weatherapp.repo.Repository
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -56,17 +59,20 @@ class MainActivity : ComponentActivity() {
             val weatherService = remember { WeatherService(this) }
             val forecastMonitor = remember { ForecastMonitor(this) }
 
+            val localDB = remember {
+                LocalDatabase(this, Firebase.auth.currentUser?.uid ?: "default_db")
+            }
+
+            val repo = remember { Repository(fbDB, localDB) }
+
             val viewModel : MainViewModel = viewModel(
-                factory = MainViewModelFactory(fbDB, weatherService, forecastMonitor)
+                factory = MainViewModelFactory(repo, weatherService, forecastMonitor)
             )
 
-            // PASSO 6 CORRIGIDO: Tratamento seguro de nulos
+
             DisposableEffect(Unit) {
                 val listener = Consumer<Intent> { intent ->
-                    // O getStringExtra retorna uma String? (pode ser nula)
                     val cityName = intent.getStringExtra("city")
-
-                    // Verificação de segurança: só age se o cityName não for nulo
                     if (cityName != null) {
                         viewModel.city = cityName
                         viewModel.page = Route.Home
