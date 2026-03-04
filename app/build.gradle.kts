@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.constraintlayout)
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")

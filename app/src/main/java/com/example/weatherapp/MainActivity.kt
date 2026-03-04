@@ -45,7 +45,7 @@ import com.google.firebase.auth.auth
 import androidx.core.util.Consumer
 import com.example.weatherapp.db.local.LocalDatabase
 import com.example.weatherapp.repo.Repository
-
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModelFactory(repo, weatherService, forecastMonitor)
             )
 
+            val user by viewModel.user.collectAsStateWithLifecycle(null)
 
             DisposableEffect(Unit) {
                 val listener = Consumer<Intent> { intent ->
@@ -109,7 +110,7 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(
                             title = {
-                                val name = viewModel.user?.name ?: "[carregando...]"
+                                val name = user?.name ?: "[carregando...]"
                                 Text("Bem-vindo/a! $name")
                             },
                             actions = {

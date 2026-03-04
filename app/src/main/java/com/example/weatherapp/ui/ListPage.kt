@@ -17,16 +17,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.weatherapp.model.City
 import com.example.weatherapp.MainViewModel
@@ -39,7 +42,12 @@ fun ListPage(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel
 ) {
-    val cityList = viewModel.cities
+
+    val cityMap by viewModel.cities.collectAsStateWithLifecycle(emptyMap())
+    val cityList = cityMap.values.toList().sortedBy { it.name }
+
+    val weatherMap by viewModel.weather.collectAsStateWithLifecycle(emptyMap())
+
     val activity = LocalActivity.current as Activity
 
     LazyColumn(
@@ -48,13 +56,19 @@ fun ListPage(
             .padding(8.dp)
     ) {
         items(items = cityList, key = { it.name } ) { city ->
+
+            LaunchedEffect(city.name) {
+                viewModel.loadWeather(city.name)
+            }
+
+            val weather = weatherMap[city.name] ?: Weather.LOADING
+
             CityItem(
                 city = city,
-                weather = viewModel.weather(city.name),
+                weather = weather,
                 onClose = {
                     viewModel.remove(city)
                 },
-                // PASSO 10: Atualizado para setar a cidade no ViewModel
                 onClick = {
                     viewModel.city = city.name
                     viewModel.page = Route.Home
@@ -80,7 +94,7 @@ fun CityItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        AsyncImage( // Substitui o Icon(...)
+        AsyncImage(
             model = weather.imgUrl,
             modifier = Modifier.size(75.dp),
             error = painterResource(id = R.drawable.loading),
@@ -108,7 +122,6 @@ fun CityItem(
             modifier = Modifier.size(28.dp).padding(end = 8.dp),
             tint = if (city.isMonitored) androidx.compose.ui.graphics.Color.Blue else androidx.compose.ui.graphics.Color.Gray
         )
-
 
         IconButton(onClick = onClose) {
             Icon(Icons.Filled.Close, contentDescription = "Close")
